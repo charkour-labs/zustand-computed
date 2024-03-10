@@ -12,11 +12,11 @@ export type ComputedStateCreator = <
   A extends object,
   Mps extends [StoreMutatorIdentifier, unknown][] = [],
   Mcs extends [StoreMutatorIdentifier, unknown][] = [],
-  U = T,
+  U = T
 >(
   f: StateCreator<T, [...Mps, ["chrisvander/zustand-computed", A]], Mcs>,
   compute: (state: T) => A,
-  opts?: ComputedStateOpts<T>,
+  opts?: ComputedStateOpts<T>
 ) => StateCreator<T, Mps, [["chrisvander/zustand-computed", A], ...Mcs], U & A>
 
 type Cast<T, U> = T extends U ? T : U
@@ -37,7 +37,7 @@ declare module "zustand" {
 type ComputedStateImpl = <T extends object, A extends object>(
   f: StateCreator<T, [], []>,
   compute: (state: T) => A,
-  opts?: ComputedStateOpts<T>,
+  opts?: ComputedStateOpts<T>
 ) => StateCreator<T, [], [], T & A>
 
 type SetStateWithArgs = Parameters<ReturnType<ComputedStateImpl>>[0] extends (...args: infer U) => void
@@ -53,25 +53,27 @@ const computedImpl: ComputedStateImpl = (f, compute, opts) => {
 
     const equalityFn = opts?.equalityFn || shallow
 
-    opts?.keys?.forEach(key => trackedSelectors.add(key));
+    opts?.keys?.forEach((key) => trackedSelectors.add(key))
 
     // we track which selectors are accessed
     const useSelectors = opts?.disableProxy !== true || !!opts?.keys
     const useProxy = opts?.disableProxy !== true && !opts?.keys
     const computeAndMerge = (state: T | (T & A)): T & A => {
-      // create a Proxy to track which selectors are accessed
-      const stateProxy = new Proxy(
-        { ...state },
-        {
-          get: (_, prop) => {
-            trackedSelectors.add(prop)
-            return state[prop as keyof T]
-          },
-        },
-      )
-
       // calculate the new computed state
-      const computedState: A = compute(useProxy ? stateProxy : { ...state })
+      const computedState: A = compute(
+        useProxy
+          ? // create a Proxy to track which selectors are accessed
+            new Proxy(
+              { ...state },
+              {
+                get: (_, prop) => {
+                  trackedSelectors.add(prop)
+                  return state[prop as keyof T]
+                },
+              }
+            )
+          : { ...state }
+      )
 
       // if part of the computed state did not change according to the equalityFn
       // then we use the object ref from the previous state. This is to prevent
@@ -87,23 +89,16 @@ const computedImpl: ComputedStateImpl = (f, compute, opts) => {
 
     // higher level function to handle compute & compare overhead
     const setWithComputed: typeof api.setState = (update, ...args) => {
-      ;(set as SetStateWithArgs)(
-        (state: T): T & A => {
-          const updated = typeof update === "object" ? update : update(state)
+      ;(set as SetStateWithArgs)((state: T): T & A => {
+        const updated = typeof update === "object" ? update : update(state)
 
-          if (
-            useSelectors &&
-            trackedSelectors.size &&
-            !Object.keys(updated).some((k) => trackedSelectors.has(k))
-          ) {
-            // if we have a selector set, but none of the updated keys are in the selector set, then we can skip the compute
-            return { ...state, ...updated } as T & A
-          }
+        if (useSelectors && trackedSelectors.size && !Object.keys(updated).some((k) => trackedSelectors.has(k))) {
+          // if we have a selector set, but none of the updated keys are in the selector set, then we can skip the compute
+          return { ...state, ...updated } as T & A
+        }
 
-          return computeAndMerge({ ...state, ...updated })
-        },
-        ...args,
-      )
+        return computeAndMerge({ ...state, ...updated })
+      }, ...args)
     }
 
     const _api = api as Mutate<StoreApi<T>, [["chrisvander/zustand-computed", A]]>

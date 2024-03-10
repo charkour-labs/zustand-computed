@@ -86,7 +86,7 @@ const computedImpl: ComputedStateImpl = (f, compute, opts) => {
     }
 
     // higher level function to handle compute & compare overhead
-    const setWithComputed = (update: T | ((state: T) => T), replace?: boolean, ...args: unknown[]) => {
+    const setWithComputed: typeof api.setState = (update, ...args) => {
       ;(set as SetStateWithArgs)(
         (state: T): T & A => {
           const updated = typeof update === "object" ? update : update(state)
@@ -102,7 +102,6 @@ const computedImpl: ComputedStateImpl = (f, compute, opts) => {
 
           return computeAndMerge({ ...state, ...updated })
         },
-        replace,
         ...args,
       )
     }

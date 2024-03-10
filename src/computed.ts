@@ -53,12 +53,7 @@ const computedImpl: ComputedStateImpl = (f, compute, opts) => {
 
     const equalityFn = opts?.equalityFn ?? shallow
 
-    if (opts?.keys) {
-      const selectorKeys = opts.keys
-      for (const key of selectorKeys) {
-        trackedSelectors.add(key)
-      }
-    }
+    opts?.keys?.forEach(key => trackedSelectors.add(key));
 
     // we track which selectors are accessed
     const useSelectors = opts?.disableProxy !== true || !!opts?.keys

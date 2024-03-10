@@ -56,8 +56,8 @@ const computedImpl: ComputedStateImpl = (f, compute, opts) => {
     opts?.keys?.forEach((key) => trackedSelectors.add(key))
 
     // we track which selectors are accessed
-    const useSelectors = opts?.disableProxy !== true || !!opts?.keys
-    const useProxy = opts?.disableProxy !== true && !opts?.keys
+    const useSelectors = !opts?.disableProxy || !!opts?.keys
+    const useProxy = !opts?.disableProxy && !opts?.keys
     const computeAndMerge = (state: T | (T & A)): T & A => {
       // calculate the new computed state
       const computedState: A = compute(

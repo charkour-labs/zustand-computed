@@ -51,7 +51,7 @@ const computedImpl: ComputedStateImpl = (f, compute, opts) => {
     type T = ReturnType<typeof f>
     type A = ReturnType<typeof compute>
 
-    const equalityFn = opts?.equalityFn ?? shallow
+    const equalityFn = opts?.equalityFn || shallow
 
     opts?.keys?.forEach(key => trackedSelectors.add(key));
 

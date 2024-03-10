@@ -104,7 +104,7 @@ const computedImpl: ComputedStateImpl = (f, compute, opts) => {
     const _api = api as Mutate<StoreApi<T>, [["chrisvander/zustand-computed", A]]>
     _api.setState = setWithComputed
     const st = f(setWithComputed, get, _api) as T & A
-    return Object.assign({}, st, compute(st))
+    return { ...st, ...compute(st) }
   }
 }
 

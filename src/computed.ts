@@ -93,7 +93,7 @@ const computedImpl: ComputedStateImpl = (f, compute, opts) => {
 
           if (
             useSelectors &&
-            trackedSelectors.size !== 0 &&
+            trackedSelectors.size &&
             !Object.keys(updated).some((k) => trackedSelectors.has(k))
           ) {
             // if we have a selector set, but none of the updated keys are in the selector set, then we can skip the compute
